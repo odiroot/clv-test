@@ -1,6 +1,7 @@
-
 # Customer lifetime Value Project
+
 ## Source and data files
+
 Download using Git:
 
     $ git clone https://github.com/odiroot/clv-test.git
@@ -26,3 +27,12 @@ Dataset from `data/orders.csv` will be loaded and processed using the model from
 In order to capture the output into a file use stream redirection:
 
     $ ./process.py > output.csv
+
+
+### Unit tests
+
+Execute directly the test file:
+
+    $ ./test.py
+
+It's possible to run the test suite using `nosetests` or `py.test` as well.
