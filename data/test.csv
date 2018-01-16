@@ -1,0 +1,2 @@
+customer_id,order_id,order_item_id,num_items,revenue,created_at_date
+deadbeefcoffee,123456,7890,1,98.76,2018-01-10

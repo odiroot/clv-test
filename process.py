@@ -4,11 +4,11 @@ import numpy
 import pandas
 
 
-def load_dataset():
+def load_dataset(path="data/orders.csv"):
     "Load example dataset from file and clean the data."
     try:
         df = pandas.read_csv(
-            "data/orders.csv",
+            path,
             dtype={
                 "customer_id": numpy.str,
                 "order_id": numpy.uint32,
