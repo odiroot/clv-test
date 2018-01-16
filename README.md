@@ -1,4 +1,4 @@
-# Customer lifetime Value Project
+# Customer Lifetime Value Project
 
 ## Source and data files
 
