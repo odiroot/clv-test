@@ -1,26 +1,28 @@
+#!/usr/bin/env python
 import dill
 import numpy
 import pandas
 
 
-def load_model():
-    with open("data/model.dill", "rb") as f:
-        return dill.load(f)
-
-
 def load_dataset():
     "Load example dataset from file and clean the data."
-    df = pandas.read_csv(
-        "data/orders.csv",
-        dtype={
-            "customer_id": numpy.str,
-            "order_id": numpy.uint32,
-            "order_item_id": numpy.float64,  # Workaround for bad data
-            "num_items": numpy.float32,  # Same here
-            "revenue": numpy.float32,
-        },
-        parse_dates=["created_at_date"]
-    )
+    try:
+        df = pandas.read_csv(
+            "data/orders.csv",
+            dtype={
+                "customer_id": numpy.str,
+                "order_id": numpy.uint32,
+                "order_item_id": numpy.float64,  # Workaround for bad data
+                "num_items": numpy.float32,  # Same here
+                "revenue": numpy.float32,
+            },
+            parse_dates=["created_at_date"]
+        )
+    except FileNotFoundError:
+        raise RuntimeError("Orders data not found. Make sure it exists.")
+    except ValueError:
+        raise RuntimeError(
+            "Dataset malformed. Ensure proper orders dataset.")
 
     # Drop "bad", assuming orders cannot be empty.
     df.dropna(inplace=True)
@@ -147,8 +149,8 @@ def get_longest_order_interval(df, days_since_df=None):
     return pandas.concat([sl, ml])
 
 
-# XXX
-def transform_data(df):
+def prepare_features(df):
+    "Based on orders dataset prepares combined dataframe for the model."
     max_items = get_max_items_in_order(df)
     max_revenue = get_max_revenue_in_order(df)
     total_revenue = get_total_customer_revenue(df)
@@ -167,25 +169,42 @@ def transform_data(df):
     return result
 
 
-# XXX
-def all_data():
+def load_model():
+    try:
+        with open("data/model.dill", "rb") as f:
+            return dill.load(f)
+    except FileNotFoundError:
+        raise RuntimeError("Couldn't file the model file. Ensure it exists.")
+
+
+def compute_clv(df):
+    "Computes CLV data series for pre-formatted input data."
+    if not isinstance(df, pandas.DataFrame):
+        raise ValueError("Argument should be a DataFrame.")
+    if df.columns.size != 6:
+        raise ValueError("Expected properly transformed input (6 columns).")
+
     model = load_model()
-
-    raw_data = load_dataset()
-    model_input = transform_data(raw_data)
-
-    result = model.predict(model_input.values)
-
-    model_input["predicted_clv"] = result
-    return model_input
+    return model.predict(df.values)
 
 
-# XXX
-def smoketest():
-    model = load_model()
-    arr = numpy.array([[3, 92, 109, 2, 12, 26], [2, 10, 43, 3, 26, 5]])
-    score = model.predict(arr)
-    print(score)
+def run_model():
+    "Loads the orders data and computes CLV for each customer."
+    df = load_dataset()
+
+    transformed = prepare_features(df)
+
+    clv_series = compute_clv(transformed)
+
+    # Attach CLV column.
+    transformed["clv"] = clv_series
+
+    # Prepare CSV output with only necessary columns.
+    output = transformed["clv"].to_csv(
+        index_label="customer_id", header=["predicted_clv"])
+    # Just send to standard output.
+    print(output)
 
 
-# TODO: Output to CSV.
+if __name__ == '__main__':
+    run_model()
