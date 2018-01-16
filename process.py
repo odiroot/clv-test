@@ -202,8 +202,10 @@ def run_model():
     # Prepare CSV output with only necessary columns.
     output = transformed["clv"].to_csv(
         index_label="customer_id", header=["predicted_clv"])
+
     # Just send to standard output.
     print(output)
+    return transformed
 
 
 if __name__ == '__main__':
